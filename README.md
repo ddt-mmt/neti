@@ -108,4 +108,4 @@ Akses aplikasi melalui browser Anda di `http://<IP_SERVER_ANDA>:5002`.
 Silakan ajukan isu atau pull request di repositori Git internal Anda (`git.brin.go.id`).
 
 ## Lisensi
-[Pilih dan tambahkan lisensi open-source di sini, misalnya MIT License]
+Proyek ini dilisensikan di bawah MIT License. Lihat file [LICENSE](LICENSE) untuk detail lebih lanjut.
