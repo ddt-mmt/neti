@@ -1,0 +1,2 @@
+# neti
+aplikasi scan
