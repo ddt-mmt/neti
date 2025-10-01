@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Device Analyzer - NETi</title>
+    <link rel="icon" href="/static/favicon.png" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #007bff, #00bcd4, #28a745, #ffc107);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 17px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background-color: #e0e0e0;
+            color: #a0a0a0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .results-container { margin-top: 2rem; }
+        .result-section { 
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .result-section h3 {
+            border-bottom: 1px solid #d0d0d0;
+            padding-bottom: 0.5rem;
+            color: #007bff;
+        }
+        #gemini-analysis { line-height: 1.6; }
+        #config-output {
+            background-color: #282c34;
+            color: #f1f1f1;
+            padding: 1rem;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: "Menlo", "Consolas", monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #spinner { display: none; text-align: center; padding: 2rem; font-weight: bold; color: #007bff; }
+        .footer {
+            text-align: center;
+            padding: 2rem 1rem 1rem 1rem;
+            font-size: 0.9rem;
+            color: #606770;
+        }
+        .header-links {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header-links a {
+            color: #333;
+            background-color: #e9ecef;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 0;
+            padding: 8px 15px;
+            border-radius: 15px 15px 0 0;
+            font-size: 1em;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            display: inline-block;
+        }
+        .header-links a:hover {
+            background-color: #ced4da;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div style="display: flex; align-items: center; justify-content: center; background-color: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <img src="/static/logo.png" alt="NETi Logo" style="max-height: 500px;">
+        </div>
+
+        <h2 style="text-align: center; color: #333; margin-top: 0; margin-bottom: 20px;">Network Device Analyzer</h2>
+
+        <p style="text-align: center; margin-bottom: 20px; color: #555;">
+            Halaman ini memungkinkan Anda menganalisis konfigurasi perangkat jaringan (seperti MikroTik atau Cisco) secara mendalam. Aplikasi akan terhubung ke perangkat melalui SSH, mengambil data konfigurasi, lalu mengirimkannya ke Mesin AI untuk dianalisis. Tujuannya adalah untuk mengidentifikasi kerentanan keamanan, kesalahan konfigurasi, dan potensi masalah kinerja, serta memberikan rekomendasi perbaikan yang jelas.
+        </p>
+
+        <div class="header-links">
+            <a href="/">Net Analyzer</a>
+            <a href="/log_analyzer">Log Analyzer</a>
+        </div>
+
+        <div class="form-group">
+            <label for="lang-select">Language:</label>
+            <select id="lang-select">
+                <option value="en">English</option>
+                <option value="id">Bahasa Indonesia</option>
+                <option value="jv">Basa Jawa</option>
+                <option value="th">ภาษาไทย</option>
+            </select>
+        </div>
+
+
+
+        <div class="form-group">
+            <label for="device-type">Device Type:</label>
+            <select id="device-type">
+                <option value="mikrotik">MikroTik RouterOS</option>
+                <option value="cisco_ios">Cisco IOS</option>
+                <option value="ruijie">Ruijie Switch</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="host-input">Device IP or Hostname:</label>
+            <input type="text" id="host-input" placeholder="e.g., 192.168.88.1">
+        </div>
+
+        <div class="form-group">
+            <label for="username-input">Username:</label>
+            <input type="text" id="username-input" placeholder="e.g., admin">
+        </div>
+
+        <div class="form-group">
+            <label for="password-input">Password:</label>
+            <input type="password" id="password-input">
+        </div>
+        
+        <div class="form-group">
+            <label for="api-key-input">Kunci API Mesin AI:</label>
+            <input type="password" id="api-key-input" placeholder="Masukkan Kunci API Mesin AI Anda">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button id="analyze-button" style="flex: 1;">Fetch and Analyze Config</button>
+            <button id="cancel-config-button" style="flex: 1; background-color: #dc3545; display: none;">Cancel Analysis</button>
+        </div>
+        
+        <div id="spinner">Fetching configuration and analyzing...</div>
+
+        <div class="results-container" id="results-output" style="display:none;">
+            <div class="result-section">
+                <h3>Analisis & Rekomendasi Mesin AI</h3>
+                <div id="ai-analysis"></div>
+            </div>
+            <div class="result-section">
+                <h3>Raw Configuration Data</h3>
+                <pre id="config-output"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2025 INFRA PUSDATIN
+    </div>
+
+    <script>
+        const translations = {
+            en: {
+                appName: "NETi",
+                netAnalyzerLink: "Net Analyzer",
+                logAnalyzerLink: "Log Analyzer",
+                configAnalyzerTitle: "Network Device Analyzer",
+                configIntroText: "This page allows you to deeply analyze network device configurations (such as MikroTik or Cisco). The application will connect to the device via SSH, retrieve configuration data, and then send it to the AI Engine for analysis. The goal is to identify security vulnerabilities, misconfigurations, and potential performance issues, and provide clear recommendations for improvement.",
+                deviceTypeLabel: "Device Type:",
+                hostLabel: "Device IP or Hostname:",
+                hostPlaceholder: "e.g., 192.168.88.1",
+                usernameLabel: "Username:",
+                usernamePlaceholder: "e.g., admin",
+                passwordLabel: "Password:",
+                apiKeyLabel: "AI Engine API Key:",
+                apiKeyPlaceholder: "Enter your AI Engine API Key",
+                analyzeButton: "Fetch and Analyze Config",
+                cancelButton: "Cancel Analysis",
+                spinner: "Fetching configuration and analyzing...",
+                aiTitle: "AI Engine Analysis & Recommendations",
+                rawConfigTitle: "Raw Configuration Data",
+                processing: "Processing...",
+                allFieldsRequired: "Please fill in all fields: Host, Username, Password, and API Key.",
+                analysisFailed: "Failed to perform analysis.",
+                analysisFailedMessage: "Ensure the device is reachable, credentials are correct, and SSH access is enabled.",
+                noAnalysis: "No analysis was generated.",
+                noConfigData: "No configuration data was retrieved."
+            },
+            id: {
+                appName: "NETi",
+                netAnalyzerLink: "Penganalisis Jaringan",
+                logAnalyzerLink: "Penganalisis Log",
+                configAnalyzerTitle: "Network Device Analyzer",
+                configIntroText: "Halaman ini memungkinkan Anda menganalisis konfigurasi perangkat jaringan (seperti MikroTik atau Cisco) secara mendalam. Aplikasi akan terhubung ke perangkat melalui SSH, mengambil data konfigurasi, lalu mengirimkannya ke Mesin AI untuk dianalisis. Tujuannya adalah untuk mengidentifikasi kerentanan keamanan, kesalahan konfigurasi, dan potensi masalah kinerja, serta memberikan rekomendasi perbaikan yang jelas.",
+                deviceTypeLabel: "Tipe Perangkat:",
+                hostLabel: "IP atau Nama Host Perangkat:",
+                hostPlaceholder: "cth: 192.168.88.1",
+                usernameLabel: "Nama Pengguna:",
+                usernamePlaceholder: "cth: admin",
+                passwordLabel: "Kata Sandi:",
+                apiKeyLabel: "Kunci API Mesin AI:",
+                apiKeyPlaceholder: "Masukkan Kunci API Mesin AI Anda",
+                analyzeButton: "Ambil dan Analisis Konfigurasi",
+                cancelButton: "Batalkan Analisis",
+                spinner: "Mengambil konfigurasi dan menganalisis...",
+                aiTitle: "Analisis & Rekomendasi Mesin AI",
+                rawConfigTitle: "Data Konfigurasi Mentah",
+                processing: "Memproses...",
+                allFieldsRequired: "Harap isi semua kolom: Tipe Perangkat, Host, Nama Pengguna, Kata Sandi, dan Kunci API.",
+                analysisFailed: "Gagal melakukan analisis.",
+                analysisFailedMessage: "Pastikan perangkat dapat dijangkau, kredensial benar, dan akses SSH diaktifkan.",
+                noAnalysis: "Tidak ada analisis yang dihasilkan.",
+                noConfigData: "Tidak ada data konfigurasi yang diambil."
+            },
+            jv: {
+                appName: "NETi",
+                netAnalyzerLink: "Penganalisis Jaringan",
+                logAnalyzerLink: "Penganalisis Log",
+                configAnalyzerTitle: "Network Device Analyzer",
+                configIntroText: "Kaca iki ngidini sampeyan nganalisis konfigurasi piranti jaringan (kayata MikroTik utawa Cisco) kanthi jero. Aplikasi bakal nyambung menyang piranti liwat SSH, njupuk data konfigurasi, banjur ngirim menyang Mesin AI kanggo dianalisis. Tujuane yaiku kanggo ngenali kerentanan keamanan, kesalahan konfigurasi, lan masalah kinerja potensial, lan menehi rekomendasi sing jelas kanggo perbaikan.",
+                deviceTypeLabel: "Jinis Piranti:",
+                hostLabel: "IP utawa Jeneng Host Piranti:",
+                hostPlaceholder: "cth: 192.168.88.1",
+                usernameLabel: "Jeneng Panganggo:",
+                usernamePlaceholder: "cth: admin",
+                passwordLabel: "Sandhi:",
+                apiKeyLabel: "Kunci API Mesin AI:",
+                apiKeyPlaceholder: "Lebokake Kunci API Mesin AI Sampeyan",
+                analyzeButton: "Jupuk lan Analisis Konfigurasi",
+                cancelButton: "Batal Analisis",
+                spinner: "Njupuk konfigurasi lan nganalisis...",
+                aiTitle: "Analisis & Rekomendasi Mesin AI",
+                rawConfigTitle: "Data Konfigurasi Mentah",
+                processing: "Ngolah...",
+                allFieldsRequired: "Tulung isi kabeh kolom: Jinis Piranti, Host, Jeneng Panganggo, Sandhi, lan Kunci API.",
+                analysisFailed: "Gagal nganalisis.",
+                analysisFailedMessage: "Priksa manawa piranti bisa dihubungi, kredensial bener, lan akses SSH diaktifake.",
+                noAnalysis: "Ora ana analisis sing diasilake.",
+                noConfigData: "Ora ana data konfigurasi sing dijupuk."
+            },
+            th: {
+                appName: "NETi",
+                netAnalyzerLink: "เครื่องวิเคราะห์เครือข่าย",
+                logAnalyzerLink: "เครื่องวิเคราะห์บันทึก",
+                configAnalyzerTitle: "Network Device Analyzer",
+                configIntroText: "หน้านี้ช่วยให้คุณสามารถวิเคราะห์การกำหนดค่าอุปกรณ์เครือข่าย (เช่น MikroTik หรือ Cisco) ได้อย่างลึกซึ้ง แอปพลิเคชันจะเชื่อมต่อกับอุปกรณ์ผ่าน SSH ดึงข้อมูลการกำหนดค่า จากนั้นส่งไปยัง AI Engine เพื่อทำการวิเคราะห์ เป้าหมายคือการระบุช่องโหว่ด้านความปลอดภัย การกำหนดค่าที่ไม่ถูกต้อง และปัญหาด้านประสิทธิภาพที่อาจเกิดขึ้น และให้คำแนะนำที่ชัดเจนสำหรับการปรับปรุง",
+                deviceTypeLabel: "ประเภทอุปกรณ์:",
+                hostLabel: "IP หรือชื่อโฮสต์อุปกรณ์:",
+                hostPlaceholder: "เช่น 192.168.88.1",
+                usernameLabel: "ชื่อผู้ใช้:",
+                usernamePlaceholder: "เช่น admin",
+                passwordLabel: "รหัสผ่าน:",
+                apiKeyLabel: "คีย์ API เครื่องมือ AI:",
+                apiKeyPlaceholder: "ป้อนคีย์ API เครื่องมือ AI ของคุณ",
+                analyzeButton: "ดึงและวิเคราะห์การกำหนดค่า",
+                cancelButton: "ยกเลิกการวิเคราะห์",
+                spinner: "กำลังดึงการกำหนดค่าและวิเคราะห์...",
+                aiTitle: "การวิเคราะห์และคำแนะนำเครื่องมือ AI",
+                rawConfigTitle: "ข้อมูลการกำหนดค่าดิบ",
+                processing: "กำลังประมวลผล...",
+                allFieldsRequired: "โปรดกรอกข้อมูลให้ครบถ้วน: ประเภทอุปกรณ์, โฮสต์, ชื่อผู้ใช้, รหัสผ่าน และคีย์ API.",
+                analysisFailed: "ไม่สามารถทำการวิเคราะห์ได้.",
+                analysisFailedMessage: "ตรวจสอบให้แน่ใจว่าอุปกรณ์สามารถเข้าถึงได้ ข้อมูลรับรองถูกต้อง และเปิดใช้งานการเข้าถึง SSH แล้ว.",
+                noAnalysis: "ไม่มีการวิเคราะห์เกิดขึ้น.",
+                noConfigData: "ไม่มีข้อมูลการกำหนดค่าถูกดึงมา."
+            }
+        };
+
+        const analyzeButton = document.getElementById('analyze-button');
+        const cancelButton = document.getElementById('cancel-config-button');
+        const spinner = document.getElementById('spinner');
+        const resultsOutput = document.getElementById('results-output');
+        const aiAnalysisDiv = document.getElementById('ai-analysis');
+        const configOutputPre = document.getElementById('config-output');
+        const langSelect = document.getElementById('lang-select');
+
+        const configAnalyzerTitle = document.getElementById('config-analyzer-title');
+        const configIntroText = document.getElementById('config-intro-text');
+        const deviceTypeLabel = document.getElementById('device-type-label');
+        const hostLabel = document.getElementById('host-label');
+        const hostInput = document.getElementById('host-input');
+        const usernameLabel = document.getElementById('username-label');
+        const usernameInput = document.getElementById('username-input');
+        const passwordLabel = document.getElementById('password-label');
+        const passwordInput = document.getElementById('password-input');
+        const apiKeyLabel = document.getElementById('api-key-label');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const aiTitle = document.getElementById('ai-title');
+        const rawConfigTitle = document.getElementById('raw-config-title');
+        const netAnalyzerLink = document.querySelector('.header-links a[href="/"]');
+        const logAnalyzerLink = document.querySelector('.header-links a[href="/log_analyzer"]');
+
+        let currentConfigId = null;
+        let pollingInterval;
+
+        function setLanguage(lang) {
+            document.documentElement.lang = lang;
+            const t = translations[lang];
+            configAnalyzerTitle.textContent = t.configAnalyzerTitle;
+            configIntroText.textContent = t.configIntroText;
+            deviceTypeLabel.textContent = t.deviceTypeLabel;
+            hostLabel.textContent = t.hostLabel;
+            hostInput.placeholder = t.hostPlaceholder;
+            usernameLabel.textContent = t.usernameLabel;
+            usernameInput.placeholder = t.usernamePlaceholder;
+            passwordLabel.textContent = t.passwordLabel;
+            apiKeyLabel.textContent = t.apiKeyLabel;
+            apiKeyInput.placeholder = t.apiKeyPlaceholder;
+            analyzeButton.textContent = t.analyzeButton;
+            cancelButton.textContent = t.cancelButton;
+            spinner.textContent = t.spinner;
+            aiTitle.textContent = t.aiTitle;
+            rawConfigTitle.textContent = t.rawConfigTitle;
+            netAnalyzerLink.textContent = t.netAnalyzerLink;
+            logAnalyzerLink.textContent = t.logAnalyzerLink;
+        }
+
+        langSelect.addEventListener('change', (e) => {
+            setLanguage(e.target.value);
+        });
+
+        function resetConfigUI() {
+            clearInterval(pollingInterval);
+            spinner.style.display = 'none';
+            analyzeButton.disabled = false;
+            analyzeButton.textContent = translations[langSelect.value].analyzeButton;
+            cancelButton.style.display = 'none';
+            currentConfigId = null;
+        }
+
+        function pollConfigStatus(configId, lang) {
+            fetch(`/config_analysis_status/${configId}`)
+                .then(response => response.json())
+                .then(data => {
+                    spinner.textContent = data.progress || translations[lang].processing;
+                    if (data.status === 'completed' || data.status === 'error' || data.status === 'cancelled') {
+                        resetConfigUI();
+                        resultsOutput.style.display = 'block';
+
+                        if (data.status === 'cancelled') {
+                            aiAnalysisDiv.innerHTML = `<p><strong>${data.error}</strong></p>`;
+                            configOutputPre.textContent = '';
+                        } else if (data.error) {
+                            aiAnalysisDiv.innerHTML = `<p><strong>${translations[lang].analysisFailed}</strong></p><p>${data.error}</p><p>${translations[lang].analysisFailedMessage}</p>`;
+                            configOutputPre.textContent = data.config_data || '';
+                        } else {
+                            const analysisHtml = marked.parse(data.ai_analysis || translations[lang].noAnalysis);
+                            aiAnalysisDiv.innerHTML = analysisHtml;
+                            configOutputPre.textContent = data.config_data || translations[lang].noConfigData;
+                        }
+                    }
+                })
+                .catch(error => {
+                    resetConfigUI();
+                    resultsOutput.style.display = 'block';
+                    aiAnalysisDiv.innerHTML = `<p><strong>${translations[lang].analysisFailed}</strong></p><p>${error.message}</p><p>${translations[lang].analysisFailedMessage}</p>`;
+                    configOutputPre.textContent = '';
+                    console.error('Polling error:', error);
+                });
+        }
+
+        analyzeButton.addEventListener('click', () => {
+            const deviceType = document.getElementById('device-type').value;
+            const host = hostInput.value.trim();
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            const apiKey = apiKeyInput.value.trim();
+            const lang = langSelect.value;
+
+            if (!host || !username || !password || !apiKey) {
+                alert(translations[lang].allFieldsRequired);
+                return;
+            }
+
+            spinner.style.display = 'block';
+            resultsOutput.style.display = 'none';
+            analyzeButton.disabled = true;
+            analyzeButton.textContent = translations[lang].processing;
+            cancelButton.style.display = 'block';
+
+            fetch('/run_config_analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    device_type: deviceType,
+                    host: host,
+                    username: username,
+                    password: password,
+                    apiKey: apiKey,
+                    lang: lang
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error || `HTTP error! Status: ${response.status}`) });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.config_id) {
+                    currentConfigId = data.config_id;
+                    pollingInterval = setInterval(() => pollConfigStatus(data.config_id, lang), 2000);
+                } else if (data.error) {
+                    resetConfigUI();
+                    resultsOutput.style.display = 'block';
+                    aiAnalysisDiv.innerHTML = `<p><strong>Error:</strong> ${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                resetConfigUI();
+                resultsOutput.style.display = 'block';
+                aiAnalysisDiv.innerHTML = `<p><strong>${translations[lang].analysisFailed}</strong></p><p>${error.message}</p><p>${translations[lang].analysisFailedMessage}</p>`;
+                configOutputPre.textContent = '';
+                console.error('Fetch error:', error);
+            });
+        });
+
+        cancelButton.addEventListener('click', () => {
+            if (currentConfigId) {
+                fetch(`/cancel_config_analysis/${currentConfigId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Cancellation request sent:', data);
+                    spinner.textContent = 'Cancelling analysis...';
+                    cancelButton.disabled = true;
+                })
+                .catch(error => {
+                    console.error('Error sending cancellation request:', error);
+                    alert('Failed to send cancellation request.');
+                });
+            }
+        });
+
+        // Set initial language based on browser settings or default to 'en'
+        const userLang = navigator.language || navigator.userLanguage;
+        const initialLang = translations[userLang.split('-')[0]] ? userLang.split('-')[0] : 'en';
+        langSelect.value = initialLang;
+        setLanguage(initialLang);
+
+    </script>
+
+</body>
+</html>

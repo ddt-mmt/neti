@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NETi - DEBUG TEST</title>
+    <link rel="icon" href="/static/favicon.png" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #007bff, #00bcd4, #28a745, #ffc107);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        #scan-description {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #e9f7ef;
+            border-left: 4px solid #28a745;
+            border-radius: 4px;
+            color: #333;
+            font-size: 0.9em;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 17px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background-color: #e0e0e0;
+            color: #a0a0a0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .results-container { margin-top: 2rem; }
+        .result-section { 
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .result-section h3 {
+            border-bottom: 1px solid #d0d0d0;
+            padding-bottom: 0.5rem;
+            color: #007bff;
+            margin-top: 1.5rem; /* Add top margin for separation */
+            margin-bottom: 1rem; /* Add bottom margin for separation */
+        }
+        .result-section p, .result-section ul, .result-section ol {
+            margin-bottom: 0.8rem; /* Add spacing for paragraphs and lists */
+        }
+        #gemini-analysis { line-height: 1.6; }
+
+        /* Report Card Styling */
+        .report-card {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .report-card h3 {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        /* Risk Level Styling */
+        .risk-critical, .risk-high, .risk-medium, .risk-low {
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 5px;
+            color: #fff;
+        }
+        .risk-critical { background-color: #dc3545; } /* Red */
+        .risk-high { background-color: #fd7e14; } /* Orange */
+        .risk-medium { background-color: #ffc107; } /* Yellow */
+        .risk-low { background-color: #28a745; } /* Green */
+
+        #scan-results {
+            background-color: #282c34;
+            color: #f1f1f1;
+            padding: 1rem;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: "Menlo", "Consolas", monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #spinner { display: none; text-align: center; padding: 2rem; font-weight: bold; color: #007bff; }
+        .footer {
+            text-align: center;
+            padding: 2rem 1rem 1rem 1rem;
+            font-size: 0.9rem;
+            color: #606770;
+        }
+        #chat-container {
+            display: none;
+        }
+        #chat-history {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #f5f6f7;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-message {
+            padding: 0.8rem 1.2rem;
+            border-radius: 18px;
+            margin-bottom: 0.5rem;
+            max-width: 80%;
+            line-height: 1.4;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .user-message {
+            background-color: #e4e6eb;
+            color: #050505;
+            align-self: flex-end;
+        }
+        .ai-message {
+            background-color: #0084ff;
+            color: white;
+            align-self: flex-start;
+        }
+        #chat-input-container {
+            display: flex;
+        }
+        #chat-input {
+            flex: 1;
+            border-radius: 18px;
+        }
+        #send-chat-button {
+            width: auto;
+            padding: 0.8rem 1.5rem;
+            border-radius: 18px;
+            margin-left: 10px;
+            background-color: #0084ff;
+        }
+        #chat-limit-message {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #606770;
+            margin-bottom: 1rem;
+        }
+        .header-links {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header-links a {
+            color: #333;
+            background-color: #e9ecef;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 0;
+            padding: 8px 15px;
+            border-radius: 15px 15px 0 0;
+            font-size: 1em;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            display: inline-block;
+        }
+        .header-links a:hover {
+            background-color: #ced4da;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div style="display: flex; align-items: center; justify-content: center; background-color: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <img src="/static/logo.png" alt="NETi Logo" style="max-height: 500px;">
+        </div>
+
+        <div class="header-links">
+            <a href="/log_analyzer" id="log-analyzer-link">Log Analyzer</a>
+            <a href="/network_device_analyzer">Network Device Analyzer</a>
+        </div>
+
+        <div class="form-group">
+            <label for="lang-select">Language:</label>
+            <select id="lang-select">
+                <option value="en">English</option>
+                <option value="id">Bahasa Indonesia</option>
+                <option value="jv">Basa Jawa</option>
+
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="scan-type">Scan Type:</label>
+            <select id="scan-type">
+                <option value="nmap">Nmap Scan</option>
+                <option value="ping">Ping</option>
+                <option value="traceroute">Traceroute</option>
+                <option value="nslookup">NSLookup</option>
+                <option value="nmap_vuln">Vulnerability Scan (⚠️ Noisy)</option>
+                <option value="subdomain_enum">Subdomain Enum (⚠️ Noisy)</option>
+                <option value="http_enum">Web Config Check (⚠️ Noisy)</option>
+                <option value="email_server_scan">Email Server Scan (⚠️ Noisy)</option>
+            </select>
+            <div id="scan-description"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="host-input" id="host-label">Target IP or Domain:</label>
+            <input type="text" id="host-input" placeholder="e.g., 127.0.0.1, example.com">
+        </div>
+
+        <div class="form-group">
+            <label for="ports-input" id="ports-label">Ports (for Nmap):</label>
+            <input type="text" id="ports-input" placeholder="e.g., 22,80,443 (optional)">
+        </div>
+
+        <div class="form-group">
+            <label for="api-key-input" id="api-key-label">API Key:</label>
+            <input type="password" id="api-key-input" placeholder="Enter your API Key">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button id="scan-button" style="flex: 1;">Scan and Analyze</button>
+            <button id="cancel-button" style="flex: 1; background-color: #dc3545; display: none;">Cancel Scan</button>
+        </div>
+        
+        <div id="spinner">Scanning and analyzing...</div>
+
+        <div class="results-container" id="results-output" style="display:none;">
+            <div class="result-section">
+                <h3 id="ai-title">Analysis & Recommendations</h3>
+                <div id="ai-analysis"></div>
+                <button id="continue-analysis-button" style="display:none; margin-top: 15px;">Continue Analysis</button>
+            </div>
+            <div class="result-section" id="chat-container">
+                <h3>Chat with AI Assistant</h3>
+                <div id="chat-limit-message"></div>
+                <div id="chat-history"></div>
+                <div id="chat-input-container">
+                    <input type="text" id="chat-input" placeholder="Ask a follow-up question...">
+                    <button id="send-chat-button">Send</button>
+                </div>
+            </div>
+            <div class="result-section">
+                <h3 id="raw-results-title">Raw Scan Data</h3>
+                <pre id="scan-results"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2025 INFRA PUSDATIN V.BETA 2
+    </div>
+
+    <script>
+        const translations = {
+            en: {
+                appName: "NETi",
+                logAnalyzerLink: "Log Analyzer",
+                hostLabel: "Target IP or Domain:",
+                hostPlaceholder: "e.g., 127.0.0.1, example.com",
+                portsLabel: "Ports (for Nmap):",
+                portsPlaceholder: "e.g., 22,80,443 (optional)",
+                apiKeyLabel: "AI Engine API Key:",
+                apiKeyPlaceholder: "Enter your AI Engine API Key",
+                scanButton: "Scan and Analyze",
+                spinner: "Scanning and analyzing...",
+                geminiTitle: "AI Engine Analysis & Recommendations",
+                rawResultsTitle: "Raw Scan Data",
+                processing: "Processing...",
+                validHost: "Please enter a valid host.",
+                scanFailed: "Failed to perform scan.",
+                scanFailedMessage: "Ensure the server is running, the target is reachable, and the API Key (if entered) is valid.",
+                noAnalysis: "No analysis was generated.",
+                noResults: "No results from the scan. The host may be offline or unresponsive.",
+                continueAnalysis: "Continue Analysis",
+                chatPlaceholder: "Ask a follow-up question...",
+                chatLimitInfo: "For security and privacy reasons, you can ask up to 5 follow-up questions.",
+                chatLimitReached: "You have reached the maximum number of follow-up questions.",
+                scanDescriptions: {
+                    nmap: "Performs a standard Nmap scan to discover open ports and running services.",
+                    ping: "Checks if a host is online by sending ICMP echo requests.",
+                    traceroute: "Traces the network path to a target host, showing all hops along the way.",
+                    nslookup: "Queries DNS servers to find domain name or IP address mapping.",
+                    nmap_vuln: "Uses Nmap's 'vuln' scripts to detect known vulnerabilities. Warning: This scan is aggressive and may be detected or blocked by firewalls.",
+                    subdomain_enum: "Attempts to find subdomains for a target domain using Nmap's 'dns-brute' script. Warning: This scan is aggressive and may be detected or blocked by firewalls.",
+                    http_enum: "Uses Nmap's 'http-enum' script to discover common web pages and directories. Warning: This scan is aggressive and may be detected or blocked by firewalls.",
+                    email_server_scan: "Performs a comprehensive vulnerability scan specifically targeting common email ports (SMTP, POP3, IMAP). It uses service version detection (-sV) and the 'vuln' script category to identify known vulnerabilities in the email server software. Warning: This scan is aggressive and may be detected or blocked by firewalls."
+                }
+            },
+            id: {
+                appName: "NETi",
+                logAnalyzerLink: "Penganalisis Log",
+                hostLabel: "IP atau Domain Target:",
+                hostPlaceholder: "cth: 127.0.0.1, example.com",
+                portsLabel: "Port (untuk Nmap):",
+                portsPlaceholder: "cth: 22,80,443 (opsional)",
+                apiKeyLabel: "Kunci API Mesin AI:",
+                apiKeyPlaceholder: "Masukkan Kunci API Mesin AI Anda",
+                scanButton: "Pindai dan Analisis",
+                spinner: "Memindai dan menganalisis...",
+                geminiTitle: "Analisis & Rekomendasi Mesin AI",
+                rawResultsTitle: "Data Pindaian Mentah",
+                processing: "Memproses...",
+                validHost: "Harap masukkan host yang valid.",
+                scanFailed: "Gagal melakukan pemindaian.",
+                scanFailedMessage: "Pastikan server berjalan, target dapat dijangkau, dan Kunci API (jika dimasukkan) valid.",
+                noAnalysis: "Tidak ada analisis yang dihasilkan.",
+                noResults: "Tidak ada hasil dari pemindaian. Host mungkin offline atau tidak merespons.",
+                continueAnalysis: "Lanjutkan Analisis",
+                chatPlaceholder: "Ajukan pertanyaan lanjutan...",
+                chatLimitInfo: "Demi keamanan dan privasi, Anda dapat mengajukan hingga 5 pertanyaan lanjutan.",
+                chatLimitReached: "Anda telah mencapai batas maksimum pertanyaan lanjutan.",
+                scanDescriptions: {
+                    nmap: "Melakukan pemindaian Nmap standar untuk menemukan port terbuka dan layanan yang berjalan.",
+                    ping: "Memeriksa apakah sebuah host online dengan mengirimkan permintaan ICMP.",
+                    traceroute: "Melacak jalur jaringan ke host target, menunjukkan setiap lompatan di sepanjang jalan.",
+                    nslookup: "Meminta server DNS untuk menemukan pemetaan nama domain atau alamat IP.",
+                    nmap_vuln: "Menggunakan skrip 'vuln' Nmap untuk mendeteksi kerentanan umum. Peringatan: Scan ini agresif dan dapat terdeteksi/diblokir oleh firewall.",
+                    subdomain_enum: "Mencoba menemukan subdomain untuk domain target menggunakan skrip 'dns-brute' Nmap. Peringatan: Scan ini agresif dan dapat terdeteksi/diblokir oleh firewall.",
+                    http_enum: "Menggunakan skrip 'http-enum' Nmap untuk menemukan halaman dan direktori web umum. Peringatan: Scan ini agresif dan dapat terdeteksi/diblokir oleh firewall.",
+                    email_server_scan: "Melakukan pemindaian kerentanan komprehensif yang secara khusus menargetkan port email umum (SMTP, POP3, IMAP). Ini menggunakan deteksi versi layanan (-sV) dan kategori skrip 'vuln' untuk mengidentifikasi kerentanan yang diketahui pada perangkat lunak server email. Peringatan: Pindai ini agresif dan dapat dideteksi/diblokir oleh firewall."
+                }
+            },
+            jv: {
+                appName: "NETi",
+                logAnalyzerLink: "Penganalisis Log",
+                hostLabel: "IP utawa Domain Target:",
+                hostPlaceholder: "cth: 127.0.0.1, example.com",
+                portsLabel: "Port (kanggo Nmap):",
+                portsPlaceholder: "cth: 22,80,443 (opsional)",
+                apiKeyLabel: "Kunci API Mesin AI:",
+                apiKeyPlaceholder: "Lebokake Kunci API Mesin AI Sampeyan",
+                scanButton: "Pindai lan Analisis",
+                spinner: "Mindai lan nganalisis...",
+                geminiTitle: "Analisis & Rekomendasi Mesin AI",
+                rawResultsTitle: "Data Pindaian Mentah",
+                processing: "Ngolah...",
+                validHost: "Tulung lebokake host sing bener.",
+                scanFailed: "Gagal mindai.",
+                scanFailedMessage: "Priksa manawa server mlaku, target bisa dihubungi, lan Kunci API (yen dilebokake) bener.",
+                noAnalysis: "Ora ana analisis sing diasilake.",
+                noResults: "Ora ana asil saka pemindaian. Host bisa uga offline utawa ora nanggapi.",
+                continueAnalysis: "Lanjutake Analisis",
+                chatPlaceholder: "Takon pitakonan lanjutan...",
+                chatLimitInfo: "Kanggo keamanan lan privasi, sampeyan bisa takon nganti 5 pitakonan lanjutan.",
+                chatLimitReached: "Sampeyan wis tekan wates maksimal pitakonan lanjutan.",
+                scanDescriptions: {
+                    nmap: "Nindakake pindai Nmap standar kanggo nemokake port sing mbukak lan layanan sing mlaku.",
+                    ping: "Priksa manawa host online kanthi ngirim panjalukan ICMP.",
+                    traceroute: "Lacak jalur jaringan menyang host target, nuduhake saben lompatan ing sadawane dalan.",
+                    nslookup: "Njaluk server DNS kanggo nemokake pemetaan jeneng domain utawa alamat IP.",
+                    nmap_vuln: "Nggunakake skrip 'vuln' Nmap kanggo ndeteksi kerentanan umum. Pepenget: Pindai iki agresif lan bisa dideteksi/diblokir dening firewall.",
+                    subdomain_enum: "Nyoba nemokake subdomain kanggo domain target nggunakake skrip 'dns-brute' Nmap. Pepenget: Pindai iki agresif lan bisa dideteksi/diblokir dening firewall.",
+                    http_enum: "Nggunakake skrip 'http-enum' Nmap kanggo nemokake kaca lan direktori web umum. Pepenget: Pindai iki agresif lan bisa dideteksi/diblokir dening firewall.",
+                    email_server_scan: "Nindakake pindai kerentanan lengkap sing khusus target port email umum (SMTP, POP3, IMAP). Iki nggunakake deteksi versi layanan (-sV) lan kategori skrip 'vuln' kanggo ngenali kerentanan sing dikenal ing piranti lunak server email. Pepenget: Pindai iki agresif lan bisa dideteksi/diblokir dening firewall."
+                }
+            },
+            th: {
+                appName: "NETi",
+                logAnalyzerLink: "เครื่องวิเคราะห์บันทึก",
+                hostLabel: "IP หรือโดเมนเป้าหมาย:",
+                hostPlaceholder: "เช่น 127.0.0.1, example.com",
+                portsLabel: "พอร์ต (สำหรับ Nmap):",
+                portsPlaceholder: "เช่น 22,80,443 (ไม่บังคับ)",
+                apiKeyLabel: "คีย์ API เครื่องมือ AI:",
+                apiKeyPlaceholder: "ป้อนคีย์ API เครื่องมือ AI ของคุณ",
+                scanButton: "สแกนและวิเคราะห์",
+                spinner: "กำลังสแกนและวิเคราะห์...",
+                geminiTitle: "การวิเคราะห์และคำแนะนำเครื่องมือ AI",
+                rawResultsTitle: "ข้อมูลการสแกนดิบ",
+                processing: "กำลังประมวลผล...",
+                validHost: "โปรดป้อนโฮสต์ที่ถูกต้อง",
+                scanFailed: "ไม่สามารถสแกนได้",
+                scanFailedMessage: "ตรวจสอบให้แน่ใจว่าเซิร์ฟเวอร์กำลังทำงาน เป้าหมายสามารถเข้าถึงได้ และคีย์ API (หากป้อน) ถูกต้อง",
+                noAnalysis: "ไม่มีการวิเคราะห์เกิดขึ้น",
+                noResults: "ไม่มีผลลัพธ์จากการสแกน โฮสต์อาจออฟไลน์หรือไม่ตอบสนอง",
+                continueAnalysis: "วิเคราะห์ต่อ",
+                chatPlaceholder: "ถามคำถามติดตามผล...",
+                chatLimitInfo: "เพื่อความปลอดภัยและความเป็นส่วนตัว คุณสามารถถามคำถามติดตามผลได้สูงสุด 5 ข้อ",
+                chatLimitReached: "คุณถามคำถามติดตามผลครบจำนวนสูงสุดแล้ว",
+                scanDescriptions: {
+                    nmap: "ทำการสแกน Nmap มาตรฐานเพื่อค้นหาพอร์ตที่เปิดอยู่และบริการที่กำลังทำงาน",
+                    ping: "ตรวจสอบว่าโฮสต์ออนไลน์หรือไม่โดยส่งคำขอ ICMP",
+                    traceroute: "ติดตามเส้นทางเครือข่ายไปยังโฮสต์เป้าหมาย โดยแสดงทุกการข้ามผ่านไป",
+                    nslookup: "ค้นหาเซิร์ฟเวอร์ DNS เพื่อค้นหาการแมปชื่อโดเมนหรือที่อยู่ IP",
+                    nmap_vuln: "ใช้สคริปต์ 'vuln' ของ Nmap เพื่อตรวจหาช่องโหว่ที่รู้จัก คำเตือน: การสแกนนี้มีความเข้มข้นและอาจถูกตรวจจับหรือบล็อกโดยไฟร์วอลล์",
+                    subdomain_enum: "พยายามค้นหาโดเมนย่อยสำหรับโดเมนเป้าหมายโดยใช้สคริปต์ 'dns-brute' ของ Nmap คำเตือน: การสแกนนี้มีความเข้มข้นและอาจถูกตรวจจับหรือบล็อกโดยไฟร์วอลล์",
+                    http_enum: "ใช้สคริปต์ 'http-enum' ของ Nmap เพื่อค้นหาหน้าเว็บและไดเรกทอรีทั่วไป คำเตือน: การสแกนนี้มีความเข้มข้นและอาจถูกตรวจจับหรือบล็อกโดยไฟร์วอลล์",
+                    email_server_scan: "ดำเนินการสแกนช่องโหว่ที่ครอบคลุมโดยกำหนดเป้าหมายพอร์ตอีเมลทั่วไป (SMTP, POP3, IMAP) โดยเฉพาะ โดยใช้การตรวจจับเวอร์ชันบริการ (-sV) และหมวดหมู่สคริปต์ 'vuln' เพื่อระบุช่องโหว่ที่รู้จักในซอฟต์แวร์เซิร์ฟเวอร์อีเมล คำเตือน: การสแกนนี้มีความเข้มข้นและอาจถูกตรวจจับหรือบล็อกโดยไฟร์วอลล์"
+                }
+            }
+        };
+
+        const langSelect = document.getElementById('lang-select');
+        const hostInput = document.getElementById('host-input');
+        const portsInput = document.getElementById('ports-input');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const scanButton = document.getElementById('scan-button');
+        const scanTypeInput = document.getElementById('scan-type');
+        const spinner = document.getElementById('spinner');
+        const resultsOutput = document.getElementById('results-output');
+        const aiAnalysisDiv = document.getElementById('ai-analysis');
+        const scanResultsPre = document.getElementById('scan-results');
+        const rawResultsTitle = document.getElementById('raw-results-title');
+        const appName = document.getElementById('app-name');
+        const logAnalyzerLink = document.getElementById('log-analyzer-link');
+        const aiTitle = document.getElementById('ai-title');
+        const continueAnalysisButton = document.getElementById('continue-analysis-button');
+        const chatContainer = document.getElementById('chat-container');
+        const chatHistory = document.getElementById('chat-history');
+        const chatInput = document.getElementById('chat-input');
+        const sendChatButton = document.getElementById('send-chat-button');
+        const chatLimitMessage = document.getElementById('chat-limit-message');
+        const scanDescriptionDiv = document.getElementById('scan-description');
+        
+        const hostLabel = document.getElementById('host-label');
+        const portsLabel = document.getElementById('ports-label');
+        const apiKeyLabel = document.getElementById('api-key-label');
+        const cancelButton = document.getElementById('cancel-button'); // Get the new cancel button
+
+        let conversationHistory = [];
+        let userMessageCount = 0;
+        let currentScanId = null; // To store the current scan ID
+
+        function updateScanDescription() {
+            const lang = langSelect.value;
+            const selectedScan = scanTypeInput.value;
+            scanDescriptionDiv.textContent = translations[lang].scanDescriptions[selectedScan] || '';
+        }
+
+        function setLanguage(lang) {
+            document.documentElement.lang = lang;
+            const t = translations[lang];
+            appName.textContent = t.appName;
+            logAnalyzerLink.textContent = t.logAnalyzerLink;
+            hostLabel.textContent = t.hostLabel;
+            hostInput.placeholder = t.hostPlaceholder;
+            portsLabel.textContent = t.portsLabel;
+            portsInput.placeholder = t.portsPlaceholder;
+            apiKeyLabel.textContent = t.apiKeyLabel;
+            apiKeyInput.placeholder = t.apiKeyPlaceholder;
+            scanButton.textContent = t.scanButton;
+            spinner.textContent = t.spinner;
+            aiTitle.textContent = t.geminiTitle;
+            rawResultsTitle.textContent = t.rawResultsTitle;
+            continueAnalysisButton.textContent = t.continueAnalysis;
+            chatInput.placeholder = t.chatPlaceholder;
+            chatLimitMessage.textContent = t.chatLimitInfo;
+            updateScanDescription(); // Update scan description when language changes
+            // Update cancel button text if needed (add to translations if desired)
+            cancelButton.textContent = "Cancel Scan"; 
+        }
+
+        langSelect.addEventListener('change', (e) => {
+            setLanguage(e.target.value);
+        });
+
+        scanTypeInput.addEventListener('change', updateScanDescription);
+
+        let pollingInterval;
+
+        function resetScanUI() {
+            clearInterval(pollingInterval);
+            spinner.style.display = 'none';
+            scanButton.disabled = false;
+            scanButton.textContent = translations[langSelect.value].scanButton;
+            cancelButton.style.display = 'none';
+            currentScanId = null;
+        }
+
+        function pollScanStatus(scanId, lang) {
+            fetch(`/scan_status/${scanId}`)
+                .then(response => response.json())
+                .then(data => {
+                    spinner.textContent = data.progress || translations[lang].processing;
+                    if (data.status === 'completed' || data.status === 'error' || data.status === 'cancelled') {
+                        resetScanUI();
+                        resultsOutput.style.display = 'block';
+
+                        if (data.status === 'cancelled') {
+                            aiAnalysisDiv.innerHTML = `<p><strong>${data.error}</strong></p>`;
+                            scanResultsPre.textContent = '';
+                        } else if (data.error) {
+                            aiAnalysisDiv.innerHTML = `<p><strong>${translations[lang].scanFailed}</strong></p><p>${data.error}</p><p>${translations[lang].scanFailedMessage}</p>`;
+                            scanResultsPre.textContent = data.scan_results || '';
+                        } else {
+                            const analysisHtml = marked.parse(data.ai_analysis || translations[lang].noAnalysis);
+                            aiAnalysisDiv.innerHTML = analysisHtml;
+                            conversationHistory.push({role: 'model', parts: [{text: data.ai_analysis}]});
+
+                            rawResultsTitle.textContent = `Raw ${data.scan_type.charAt(0).toUpperCase() + data.scan_type.slice(1)} Data`;
+                            if (data.scan_results) {
+                                if (data.scan_type === 'nmap' || data.scan_type === 'nmap_vuln' || data.scan_type === 'subdomain_enum' || data.scan_type === 'http_enum') {
+                                    scanResultsPre.textContent = JSON.stringify(data.scan_results, null, 2);
+                                } else {
+                                    scanResultsPre.textContent = typeof data.scan_results === 'string' ? data.scan_results : JSON.stringify(data.scan_results, null, 2);
+                                }
+                            } else {
+                                scanResultsPre.textContent = translations[lang].noResults;
+                            }
+                            if (data.ai_analysis) {
+                                continueAnalysisButton.style.display = 'block';
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    resetScanUI();
+                    resultsOutput.style.display = 'block';
+                    aiAnalysisDiv.innerHTML = `<p><strong>${translations[lang].scanFailed}</strong></p><p>${error.message}</p><p>${translations[lang].scanFailedMessage}</p>`;
+                    scanResultsPre.textContent = '';
+                    console.error('Polling error:', error);
+                });
+        }
+
+        scanButton.addEventListener('click', () => {
+            const host = hostInput.value.trim();
+            const ports = portsInput.value.trim();
+            const apiKey = apiKeyInput.value.trim();
+            const scanType = scanTypeInput.value;
+            const lang = langSelect.value;
+
+            if (!host) {
+                alert(translations[lang].validHost);
+                return;
+            }
+
+            spinner.style.display = 'block';
+            resultsOutput.style.display = 'none';
+            scanButton.disabled = true;
+            scanButton.textContent = translations[lang].processing;
+            cancelButton.style.display = 'block'; // Show cancel button
+            continueAnalysisButton.style.display = 'none';
+            chatContainer.style.display = 'none';
+            conversationHistory = [];
+            chatHistory.innerHTML = '';
+            userMessageCount = 0;
+            chatInput.disabled = false;
+            sendChatButton.disabled = false;
+
+            fetch('/scan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ host: host, ports: ports, apiKey: apiKey, scan_type: scanType, lang: lang })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error || `HTTP error! Status: ${response.status}`) });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.scan_id) {
+                    currentScanId = data.scan_id; // Store scan ID
+                    pollingInterval = setInterval(() => pollScanStatus(data.scan_id, lang), 2000); // Poll every 2 seconds
+                } else if (data.error) {
+                    resetScanUI();
+                    resultsOutput.style.display = 'block';
+                    aiAnalysisDiv.innerHTML = `<p><strong>Error:</strong> ${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                resetScanUI();
+                resultsOutput.style.display = 'block';
+                aiAnalysisDiv.innerHTML = `<p><strong>${translations[lang].scanFailed}</strong></p><p>${error.message}</p><p>${translations[lang].scanFailedMessage}</p>`;
+                scanResultsPre.textContent = '';
+                console.error('Fetch error:', error);
+            });
+        });
+
+        cancelButton.addEventListener('click', () => {
+            if (currentScanId) {
+                fetch(`/cancel_scan/${currentScanId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Cancellation request sent:', data);
+                    // UI will be updated by pollScanStatus when it receives 'cancelled' status
+                    spinner.textContent = 'Cancelling scan...';
+                    cancelButton.disabled = true; // Disable cancel button after sending request
+                })
+                .catch(error => {
+                    console.error('Error sending cancellation request:', error);
+                    alert('Failed to send cancellation request.');
+                });
+            }
+        });
+
+        continueAnalysisButton.addEventListener('click', () => {
+            chatContainer.style.display = 'block';
+            continueAnalysisButton.style.display = 'none';
+            chatLimitMessage.style.display = 'block';
+        });
+
+        function appendMessage(role, html) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message');
+            messageElement.classList.add(role === 'user' ? 'user-message' : 'ai-message');
+            messageElement.innerHTML = html;
+            chatHistory.appendChild(messageElement);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        sendChatButton.addEventListener('click', () => {
+            if (userMessageCount >= 5) {
+                const lang = langSelect.value;
+                alert(translations[lang].chatLimitReached);
+                return;
+            }
+
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            userMessageCount++;
+            conversationHistory.push({role: 'user', parts: [{text: message}]});
+            appendMessage('user', message);
+            chatInput.value = '';
+
+            if (userMessageCount >= 5) {
+                const lang = langSelect.value;
+                chatInput.disabled = true;
+                sendChatButton.disabled = true;
+                chatLimitMessage.textContent = translations[lang].chatLimitReached;
+            }
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    history: conversationHistory, 
+                    apiKey: apiKeyInput.value.trim(),
+                    lang: langSelect.value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const responseHtml = marked.parse(data.response);
+                conversationHistory.push({role: 'model', parts: [{text: data.response}]});
+                appendMessage('ai', responseHtml);
+            });
+        });
+
+        // Set initial language based on browser settings or default to 'en'
+        const userLang = navigator.language || navigator.userLanguage;
+        const initialLang = translations[userLang.split('-')[0]] ? userLang.split('-')[0] : 'en';
+        langSelect.value = initialLang;
+        setLanguage(initialLang);
+
+    </script>
+
+</body>
+</html>

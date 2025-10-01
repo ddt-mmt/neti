@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Analyzer - NETi</title>
+    <link rel="icon" href="/static/favicon.png" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        textarea, input[type="password"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 1rem;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 17px;
+            display: block;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results-container { margin-top: 2rem; }
+        .result-section { 
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+        }
+        .footer {
+            text-align: center;
+            padding: 2rem 1rem 1rem 1rem;
+            font-size: 0.9rem;
+            color: #606770;
+        }
+        .header-links {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header-links a {
+            color: #333;
+            background-color: #e9ecef;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 0;
+            padding: 8px 15px;
+            border-radius: 15px 15px 0 0;
+            font-size: 1em;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            display: inline-block;
+        }
+        .header-links a:hover {
+            background-color: #ced4da;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div style="display: flex; align-items: center; justify-content: center; background-color: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <img src="/static/logo.png" alt="NETi Logo" style="max-height: 500px;">
+        </div>
+
+        <h2 style="text-align: center; color: #333; margin-top: 0; margin-bottom: 20px;">Log Analyzer</h2>
+
+        <p style="text-align: center; margin-bottom: 20px; color: #555;">
+            Halaman ini dirancang untuk membantu Anda menganalisis data log dari berbagai sumber. Cukup tempelkan data log Anda, dan Mesin AI akan memprosesnya untuk mengidentifikasi pola anomali, potensi ancaman keamanan, masalah operasional, atau indikasi serangan. Tujuannya adalah untuk memberikan wawasan cepat dan rekomendasi yang dapat ditindaklanjuti untuk menjaga keamanan dan kinerja sistem Anda.
+        </p>
+
+        <div class="header-links">
+            <a href="/">Net Analyzer</a>
+            <a href="/network_device_analyzer">Network Device Analyzer</a>
+        </div>
+
+        <div class="form-group">
+            <label for="lang-select">Language:</label>
+            <select id="lang-select">
+                <option value="en">English</option>
+                <option value="id">Bahasa Indonesia</option>
+                <option value="jv">Basa Jawa</option>
+                <option value="th">ภาษาไทย</option>
+            </select>
+        </div>
+
+        <p id="log-intro-text">Paste your log data below to get an analysis from Gemini.</p>
+        <textarea id="log-input" placeholder="Paste your log data here..." rows="15"></textarea>
+        <label for="api-key-input" id="api-key-label">Kunci API Mesin AI:</label>
+        <input type="password" id="api-key-input" placeholder="Masukkan Kunci API Mesin AI Anda">
+        <div style="display: flex; gap: 10px;">
+            <button id="analyze-button" style="flex: 1;">Analyze Log</button>
+            <button id="cancel-button" style="flex: 1; background-color: #dc3545; display: none;">Cancel Analysis</button>
+        </div>
+
+        <div id="spinner" style="display: none; text-align: center; padding: 2rem; font-weight: bold; color: #007bff;">Analyzing...</div>
+
+        <div id="results-output" class="results-container" style="display:none;">
+            <div class="result-section">
+                <h3 id="ai-title">Analisis Mesin AI</h3>
+                <div id="ai-analysis"></div>
+            </div>
+            <div class="result-section">
+                <h3 id="raw-log-title">Raw Log Data</h3>
+                <pre id="raw-log-display"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2025 INFRA PUSDATIN
+    </div>
+
+    <script>
+        const translations = {
+            en: {
+                appName: "NETi",
+                netAnalyzerLink: "Net Analyzer",
+                configAnalyzerLink: "Config Analyzer",
+                logIntroText: "Paste your log data below to get an analysis from Gemini.",
+                apiKeyLabel: "AI Engine API Key:",
+                apiKeyPlaceholder: "Enter your AI Engine API Key",
+                analyzeButton: "Analyze Log",
+                cancelButton: "Cancel Analysis",
+                spinner: "Analyzing...",
+                aiTitle: "AI Engine Analysis & Recommendations",
+                rawLogTitle: "Raw Log Data",
+                processing: "Processing...",
+                logDataEmpty: "Please paste log data.",
+                apiKeyEmpty: "Please provide an API Key.",
+                analysisFailed: "Failed to perform log analysis.",
+                analysisFailedMessage: "Ensure the server is running and the API Key is valid.",
+                noAnalysis: "No analysis was generated.",
+                noResults: "No raw log data to display."
+            },
+            id: {
+                appName: "NETi",
+                netAnalyzerLink: "Penganalisis Jaringan",
+                configAnalyzerLink: "Penganalisis Konfigurasi",
+                logIntroText: "Tempel data log Anda di bawah untuk mendapatkan analisis dari Gemini.",
+                apiKeyLabel: "Kunci API Mesin AI:",
+                apiKeyPlaceholder: "Masukkan Kunci API Mesin AI Anda",
+                analyzeButton: "Analisis Log",
+                cancelButton: "Batalkan Analisis",
+                spinner: "Menganalisis...",
+                aiTitle: "Analisis & Rekomendasi Mesin AI",
+                rawLogTitle: "Data Log Mentah",
+                processing: "Memproses...",
+                logDataEmpty: "Harap tempel data log.",
+                apiKeyEmpty: "Harap berikan Kunci API.",
+                analysisFailed: "Gagal melakukan analisis log.",
+                analysisFailedMessage: "Pastikan server berjalan dan Kunci API valid.",
+                noAnalysis: "Tidak ada analisis yang dihasilkan.",
+                noResults: "Tidak ada data log mentah untuk ditampilkan."
+            },
+            jv: {
+                appName: "NETi",
+                netAnalyzerLink: "Penganalisis Jaringan",
+                configAnalyzerLink: "Penganalisis Konfigurasi",
+                logIntroText: "Tempel data log sampeyan ing ngisor iki kanggo entuk analisis saka Gemini.",
+                apiKeyLabel: "Kunci API Mesin AI:",
+                apiKeyPlaceholder: "Lebokake Kunci API Mesin AI Sampeyan",
+                analyzeButton: "Analisis Log",
+                cancelButton: "Batal Analisis",
+                spinner: "Nganalisis...",
+                aiTitle: "Analisis & Rekomendasi Mesin AI",
+                rawLogTitle: "Data Log Mentah",
+                processing: "Ngolah...",
+                logDataEmpty: "Tulung tempel data log.",
+                apiKeyEmpty: "Tulung wenehi Kunci API.",
+                analysisFailed: "Gagal nganalisis log.",
+                analysisFailedMessage: "Priksa manawa server mlaku lan Kunci API bener.",
+                noAnalysis: "Ora ana analisis sing diasilake.",
+                noResults: "Ora ana data log mentah kanggo ditampilake."
+            },
+            th: {
+                appName: "NETi",
+                netAnalyzerLink: "เครื่องวิเคราะห์เครือข่าย",
+                configAnalyzerLink: "เครื่องวิเคราะห์การกำหนดค่า",
+                logIntroText: "วางข้อมูลบันทึกของคุณด้านล่างเพื่อรับการวิเคราะห์จาก Gemini.",
+                apiKeyLabel: "คีย์ API เครื่องมือ AI:",
+                apiKeyPlaceholder: "ป้อนคีย์ API เครื่องมือ AI ของคุณ",
+                analyzeButton: "วิเคราะห์บันทึก",
+                cancelButton: "ยกเลิกการวิเคราะห์",
+                spinner: "กำลังวิเคราะห์...",
+                aiTitle: "การวิเคราะห์และคำแนะนำเครื่องมือ AI",
+                rawLogTitle: "ข้อมูลบันทึกดิบ",
+                processing: "กำลังประมวลผล...",
+                logDataEmpty: "โปรดวางข้อมูลบันทึก.",
+                apiKeyEmpty: "โปรดระบุคีย์ API.",
+                analysisFailed: "ไม่สามารถวิเคราะห์บันทึกได้.",
+                analysisFailedMessage: "ตรวจสอบให้แน่ใจว่าเซิร์ฟเวอร์กำลังทำงานและคีย์ API ถูกต้อง.",
+                noAnalysis: "ไม่มีการวิเคราะห์เกิดขึ้น.",
+                noResults: "ไม่มีข้อมูลบันทึกดิบที่จะแสดง."
+            }
+        };
+
+        const analyzeButton = document.getElementById('analyze-button');
+        const logInput = document.getElementById('log-input');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const resultsOutput = document.getElementById('results-output');
+        const aiAnalysisDiv = document.getElementById('ai-analysis');
+        const rawLogDisplayPre = document.getElementById('raw-log-display');
+        const spinner = document.getElementById('spinner');
+        const cancelButton = document.getElementById('cancel-button');
+        const langSelect = document.getElementById('lang-select');
+
+        const logIntroText = document.getElementById('log-intro-text');
+        const apiKeyLabel = document.getElementById('api-key-label');
+        const aiTitle = document.getElementById('ai-title');
+        const rawLogTitle = document.getElementById('raw-log-title');
+        const netAnalyzerLink = document.querySelector('.header-links a[href="/"]');
+        const configAnalyzerLink = document.querySelector('.header-links a[href="/config_analyzer"]');
+
+        let currentLogId = null;
+        let pollingInterval;
+
+        function setLanguage(lang) {
+            document.documentElement.lang = lang;
+            const t = translations[lang];
+            logIntroText.textContent = t.logIntroText;
+            apiKeyLabel.textContent = t.apiKeyLabel;
+            apiKeyInput.placeholder = t.apiKeyPlaceholder;
+            analyzeButton.textContent = t.analyzeButton;
+            cancelButton.textContent = t.cancelButton;
+            spinner.textContent = t.spinner;
+            aiTitle.textContent = t.aiTitle;
+            rawLogTitle.textContent = t.rawLogTitle;
+            netAnalyzerLink.textContent = t.netAnalyzerLink;
+            configAnalyzerLink.textContent = t.configAnalyzerLink;
+        }
+
+        langSelect.addEventListener('change', (e) => {
+            setLanguage(e.target.value);
+        });
+
+        function resetLogUI() {
+            clearInterval(pollingInterval);
+            spinner.style.display = 'none';
+            analyzeButton.disabled = false;
+            analyzeButton.textContent = translations[langSelect.value].analyzeButton;
+            cancelButton.style.display = 'none';
+            currentLogId = null;
+        }
+
+        function pollLogAnalysisStatus(logId, lang) {
+            fetch(`/log_analysis_status/${logId}`)
+                .then(response => response.json())
+                .then(data => {
+                    spinner.textContent = data.progress || translations[lang].processing;
+                    if (data.status === 'completed' || data.status === 'error' || data.status === 'cancelled') {
+                        resetLogUI();
+                        resultsOutput.style.display = 'block';
+
+                        if (data.status === 'cancelled') {
+                            aiAnalysisDiv.innerHTML = `<p><strong>${data.error}</strong></p>`;
+                            rawLogDisplayPre.textContent = '';
+                        } else if (data.error) {
+                            aiAnalysisDiv.innerHTML = `<p><strong>${translations[lang].analysisFailed}</strong></p><p>${data.error}</p><p>${translations[lang].analysisFailedMessage}</p>`;
+                            rawLogDisplayPre.textContent = data.raw_log_data || '';
+                        } else {
+                            const analysisHtml = marked.parse(data.ai_analysis || translations[lang].noAnalysis);
+                            aiAnalysisDiv.innerHTML = analysisHtml;
+                            rawLogDisplayPre.textContent = data.raw_log_data || translations[lang].noResults;
+                        }
+                    }
+                })
+                .catch(error => {
+                    resetLogUI();
+                    resultsOutput.style.display = 'block';
+                    aiAnalysisDiv.innerHTML = `<p><strong>${translations[lang].analysisFailed}</strong></p><p>${error.message}</p><p>${translations[lang].analysisFailedMessage}</p>`;
+                    rawLogDisplayPre.textContent = '';
+                    console.error('Polling error:', error);
+                });
+        }
+
+        analyzeButton.addEventListener('click', () => {
+            const logData = logInput.value.trim();
+            const apiKey = apiKeyInput.value.trim();
+            const lang = langSelect.value;
+
+            if (!logData) {
+                alert(translations[lang].logDataEmpty);
+                return;
+            }
+            if (!apiKey) {
+                alert(translations[lang].apiKeyEmpty);
+                return;
+            }
+
+            spinner.style.display = 'block';
+            resultsOutput.style.display = 'none';
+            analyzeButton.disabled = true;
+            analyzeButton.textContent = translations[lang].processing;
+            cancelButton.style.display = 'block';
+
+            fetch('/analyze_log', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ log_data: logData, apiKey: apiKey, lang: lang })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error || `HTTP error! Status: ${response.status}`) });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.log_id) {
+                    currentLogId = data.log_id;
+                    pollingInterval = setInterval(() => pollLogAnalysisStatus(data.log_id, lang), 2000);
+                } else if (data.error) {
+                    resetLogUI();
+                    resultsOutput.style.display = 'block';
+                    aiAnalysisDiv.innerHTML = `<p><strong>Error:</strong> ${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                resetLogUI();
+                resultsOutput.style.display = 'block';
+                aiAnalysisDiv.innerHTML = `<p><strong>${translations[lang].analysisFailed}</strong></p><p>${error.message}</p><p>${translations[lang].analysisFailedMessage}</p>`;
+                rawLogDisplayPre.textContent = '';
+                console.error('Fetch error:', error);
+            });
+        });
+
+        cancelButton.addEventListener('click', () => {
+            if (currentLogId) {
+                fetch(`/cancel_log_analysis/${currentLogId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Cancellation request sent:', data);
+                    spinner.textContent = 'Cancelling analysis...';
+                    cancelButton.disabled = true;
+                })
+                .catch(error => {
+                    console.error('Error sending cancellation request:', error);
+                    alert('Failed to send cancellation request.');
+                });
+            }
+        });
+
+        // Set initial language based on browser settings or default to 'en'
+        const userLang = navigator.language || navigator.userLanguage;
+        const initialLang = translations[userLang.split('-')[0]] ? userLang.split('-')[0] : 'en';
+        langSelect.value = initialLang;
+        setLanguage(initialLang);
+
+    </script>
+
+</body>
+</html>
