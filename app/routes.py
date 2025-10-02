@@ -56,6 +56,7 @@ def scan():
         target = data.get('host')
         ports = data.get('ports')
         ai_api_key = data.get('apiKey') # Get API key from request body
+        print(f"--- /scan received API Key (masked): {ai_api_key[:5]}...{ai_api_key[-5:] if ai_api_key else '[EMPTY/NONE]'} ---", file=sys.stderr)
         scan_type = data.get('scan_type', 'nmap')
         lang = data.get('lang', 'en')
 
